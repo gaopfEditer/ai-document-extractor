@@ -1,0 +1,29 @@
+{
+  "schema": "coi",
+  "filename": "coi-northwind-scaffolding.pdf",
+  "needle": "Northwind Scaffolding LLC",
+  "payload": {
+    "company_name": "Northwind Scaffolding LLC",
+    "policy_number": "GL-88421-NW",
+    "insurer": "Pinnacle Mutual Insurance",
+    "coverage_types": [
+      "General Liability",
+      "Workers Compensation"
+    ],
+    "limits": [
+      {
+        "coverage_type": "General Liability",
+        "limit": "$1,000,000 each occurrence / $2,000,000 aggregate"
+      },
+      {
+        "coverage_type": "Workers Compensation",
+        "limit": "Statutory limits"
+      }
+    ],
+    "effective_date": "2026-01-20",
+    "expiry_date": "2026-10-25",
+    "confidence": 0.95,
+    "needs_review": false,
+    "review_reasons": []
+  }
+}

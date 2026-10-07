@@ -1,0 +1,409 @@
+{
+  "name": "AI Document Extractor",
+  "description": "Read a certificate or invoice, ask a model for the fields only, decide the date status in a code node, append a sheet row, and email a reminder inside a fixed window.",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Ingest\nUse **Manual sample** to try the field path with the fictional Northwind certificate.\n\nUse **New email** when you want unseen PDF attachments from IMAP. After import, attach your IMAP credential and confirm the binary property name matches **Extract PDF text**.",
+        "height": 220,
+        "width": 420,
+        "color": 4
+      },
+      "id": "b7c1a1d0-6e11-4a7e-9c1a-111111111111",
+      "name": "Note: how a file arrives",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [180, 80]
+    },
+    {
+      "parameters": {},
+      "id": "b7c1a1d0-6e11-4a7e-9c1a-222222222222",
+      "name": "Manual sample",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [220, 360]
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = [\n  'Named Insured: Northwind Scaffolding LLC',\n  'Policy Number: GL-88421-NW',\n  'Insurance Company: Pinnacle Mutual Insurance',\n  'Effective Date: 2026-01-19',\n  'Expiry Date: 2026-10-24',\n  'Coverages:',\n  '- General Liability: $1,000,000 each occurrence / $2,000,000 aggregate'\n].join('\\n');\nreturn [{ json: { filename: 'coi-northwind-scaffolding.pdf', text, schema: 'coi' } }];"
+      },
+      "id": "b7c1a1d0-6e11-4a7e-9c1a-333333333333",
+      "name": "Sample certificate text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 360]
+    },
+    {
+      "parameters": {
+        "mailbox": "INBOX",
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "id": "b7c1a1d0-6e11-4a7e-9c1a-444444444444",
+      "name": "New email",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [220, 560],
+      "notes": "Attach an IMAP credential after import. This node is optional."
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "attachment_0"
+      },
+      "id": "b7c1a1d0-6e11-4a7e-9c1a-555555555555",
+      "name": "Extract PDF text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [480, 560],
+      "notes": "If your IMAP node names the binary differently, change binaryPropertyName."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'gpt-4o-mini', temperature: 0, messages: [ { role: 'system', content: 'Extract fields into JSON. Copy only printed values. Use null when a value is missing. Set confidence from 0 to 1 and needs_review when a required field is missing. Do not decide expiry status and do not decide whether to send a reminder. For a certificate return company_name, policy_number, insurer, coverage_types, limits, effective_date, expiry_date, confidence, needs_review, review_reasons. For an invoice return vendor, invoice_number, invoice_date, due_date, line_items, total, currency, confidence, needs_review, review_reasons.' }, { role: 'user', content: $json.text || $json.data || '' } ], response_format: { type: 'json_object' } }) }}",
+        "options": {}
+      },
+      "id": "b7c1a1d0-6e11-4a7e-9c1a-666666666666",
+      "name": "Ask the model for fields",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, 440],
+      "notes": "Create a Header Auth credential. Name: Authorization. Value: Bearer YOUR_OPENAI_KEY."
+    },
+    {
+      "parameters": {
+        "content": "## The model does not decide status\nThe next code node parses the JSON, checks required fields, and sets `status` from the date and a 30-day window.\n\nSame rules as `src/doc_extractor/status.py`:\n- no date → unknown\n- before today → expired\n- today through 30 days → expiring_soon\n- later → valid",
+        "height": 260,
+        "width": 360,
+        "color": 3
+      },
+      "id": "b7c1a1d0-6e11-4a7e-9c1a-777777777777",
+      "name": "Note: status is code",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [980, 80]
+    },
+    {
+      "parameters": {
+        "jsCode": "const WINDOW_DAYS = 30;\n\nfunction asObject(payload) {\n  if (payload && payload.choices) {\n    const content = payload.choices[0].message.content;\n    return JSON.parse(content);\n  }\n  if (payload && payload.fields) return payload.fields;\n  return payload;\n}\n\nfunction statusFor(dateStr) {\n  if (!dateStr) return { status: 'unknown', days: null };\n  const today = new Date();\n  today.setUTCHours(0, 0, 0, 0);\n  const due = new Date(String(dateStr).slice(0, 10) + 'T00:00:00Z');\n  const days = Math.round((due - today) / 86400000);\n  if (Number.isNaN(days)) return { status: 'unknown', days: null };\n  if (days < 0) return { status: 'expired', days };\n  if (days <= WINDOW_DAYS) return { status: 'expiring_soon', days };\n  return { status: 'valid', days };\n}\n\nconst input = $input.first().json;\nconst extracted = asObject(input);\nconst schema = extracted.vendor || extracted.invoice_number ? 'invoice' : 'coi';\nconst reasons = Array.isArray(extracted.review_reasons) ? extracted.review_reasons.slice() : [];\nlet needsReview = Boolean(extracted.needs_review);\nconst required = schema === 'invoice'\n  ? ['vendor', 'invoice_number', 'total', 'due_date']\n  : ['company_name', 'policy_number', 'insurer', 'expiry_date'];\nfor (const field of required) {\n  const value = extracted[field];\n  if (value === null || value === undefined || value === '') {\n    needsReview = true;\n    const label = 'Missing ' + field.replaceAll('_', ' ') + '.';\n    if (!reasons.includes(label)) reasons.push(label);\n  }\n}\nconst relevant = schema === 'invoice' ? extracted.due_date : extracted.expiry_date;\nconst decided = statusFor(relevant);\nconst title = schema === 'invoice' ? extracted.vendor : extracted.company_name;\nconst reference = schema === 'invoice' ? extracted.invoice_number : extracted.policy_number;\nreturn [{\n  json: {\n    id: schema + ':' + String(reference || title || 'row').replace(/\\s+/g, '-'),\n    schema,\n    filename: input.filename || '',\n    title: title || '',\n    reference: reference || '',\n    secondary: extracted.insurer || '',\n    relevant_date: relevant || '',\n    status: decided.status,\n    days_until: decided.days,\n    confidence: extracted.confidence ?? 0,\n    needs_review: needsReview,\n    review_reasons: reasons.join('; '),\n    reminded_at: '',\n    payload_json: JSON.stringify(extracted)\n  }\n}];"
+      },
+      "id": "b7c1a1d0-6e11-4a7e-9c1a-888888888888",
+      "name": "Validate fields and set status",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1080, 440]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Extractions"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "b7c1a1d0-6e11-4a7e-9c1a-999999999999",
+      "name": "Append sheet row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1360, 440]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "review-check",
+              "leftValue": "={{ $json.needs_review }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b7c1a1d0-6e11-4a7e-9c1a-aaaaaaaaaaaa",
+      "name": "Needs review?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1600, 440]
+    },
+    {
+      "parameters": {
+        "text": "=A document needs review: {{ $json.title || $json.filename }}. {{ $json.review_reasons }}",
+        "otherOptions": {}
+      },
+      "id": "b7c1a1d0-6e11-4a7e-9c1a-bbbbbbbbbbbb",
+      "name": "Alert Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1840, 360]
+    },
+    {
+      "parameters": {
+        "content": "## Daily reminders\nThis branch does not call a model.\nIt keeps a row only when the date is inside 30 days, `reminded_at` is empty, and `needs_review` is not true.\n\nAttach Google Sheets and SMTP credentials, and set the spreadsheet ID on both sheet nodes.",
+        "height": 200,
+        "width": 420,
+        "color": 5
+      },
+      "id": "b7c1a1d0-6e11-4a7e-9c1a-cccccccccccc",
+      "name": "Note: reminder rules",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [180, 760]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "b7c1a1d0-6e11-4a7e-9c1a-dddddddddddd",
+      "name": "Every day at 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [220, 1020]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Extractions"
+        },
+        "options": {}
+      },
+      "id": "b7c1a1d0-6e11-4a7e-9c1a-eeeeeeeeeeee",
+      "name": "Read sheet rows",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [480, 1020]
+    },
+    {
+      "parameters": {
+        "jsCode": "const WINDOW_DAYS = 30;\nconst today = new Date();\ntoday.setUTCHours(0, 0, 0, 0);\nconst out = [];\nfor (const item of $input.all()) {\n  const row = item.json;\n  if (row.reminded_at) continue;\n  const review = String(row.needs_review).toLowerCase();\n  if (review === 'true' || review === 'yes' || row.needs_review === true) continue;\n  const dateStr = row.relevant_date || row.expiry_date || row.due_date;\n  if (!dateStr) continue;\n  const due = new Date(String(dateStr).slice(0, 10) + 'T00:00:00Z');\n  const days = Math.round((due - today) / 86400000);\n  if (days >= 0 && days <= WINDOW_DAYS) {\n    out.push({ json: { ...row, days_until: days } });\n  }\n}\nreturn out;"
+      },
+      "id": "b7c1a1d0-6e11-4a7e-9c1a-ffffffffffff",
+      "name": "Keep rows inside the window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [760, 1020]
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first().json;\nconst days = Number(row.days_until);\nconst when = days === 0 ? 'today' : `in ${days} ${days === 1 ? 'day' : 'days'}`;\nconst isInvoice = row.schema === 'invoice';\nconst subject = isInvoice\n  ? `Invoice due ${when}: ${row.reference} (${row.title})`\n  : `Certificate expiring ${when}: ${row.title}`;\nconst body = [\n  'Hello,',\n  '',\n  isInvoice\n    ? 'An invoice in your tracker is coming due.'\n    : 'A certificate of insurance in your tracker is approaching its expiry date.',\n  '',\n  `Name: ${row.title || ''}`,\n  `Reference: ${row.reference || ''}`,\n  `Date: ${row.relevant_date || ''}`,\n  `Days remaining: ${days}`,\n  '',\n  'This reminder was selected by a fixed rule in the workflow, not by the model.',\n  ''\n].join('\\n');\nreturn [{ json: { ...row, subject, body, reminded_at: new Date().toISOString() } }];"
+      },
+      "id": "c7c1a1d0-6e11-4a7e-9c1a-121212121212",
+      "name": "Write the email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1020, 1020]
+    },
+    {
+      "parameters": {
+        "fromEmail": "reminders@example.com",
+        "toEmail": "project-manager@example.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {}
+      },
+      "id": "c7c1a1d0-6e11-4a7e-9c1a-131313131313",
+      "name": "Send reminder",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1280, 1020]
+    }
+  ],
+  "connections": {
+    "Manual sample": {
+      "main": [
+        [
+          {
+            "node": "Sample certificate text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample certificate text": {
+      "main": [
+        [
+          {
+            "node": "Ask the model for fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New email": {
+      "main": [
+        [
+          {
+            "node": "Extract PDF text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PDF text": {
+      "main": [
+        [
+          {
+            "node": "Ask the model for fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask the model for fields": {
+      "main": [
+        [
+          {
+            "node": "Validate fields and set status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate fields and set status": {
+      "main": [
+        [
+          {
+            "node": "Append sheet row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append sheet row": {
+      "main": [
+        [
+          {
+            "node": "Needs review?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs review?": {
+      "main": [
+        [
+          {
+            "node": "Alert Slack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Every day at 08:00": {
+      "main": [
+        [
+          {
+            "node": "Read sheet rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read sheet rows": {
+      "main": [
+        [
+          {
+            "node": "Keep rows inside the window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep rows inside the window": {
+      "main": [
+        [
+          {
+            "node": "Write the email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write the email": {
+      "main": [
+        [
+          {
+            "node": "Send reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

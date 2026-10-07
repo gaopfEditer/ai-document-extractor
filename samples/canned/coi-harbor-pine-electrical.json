@@ -1,0 +1,34 @@
+{
+  "schema": "coi",
+  "filename": "coi-harbor-pine-electrical.pdf",
+  "needle": "Harbor & Pine Electrical Co.",
+  "payload": {
+    "company_name": "Harbor & Pine Electrical Co.",
+    "policy_number": "CPL-22019-HP",
+    "insurer": "Cedar State Assurance",
+    "coverage_types": [
+      "General Liability",
+      "Automobile Liability",
+      "Umbrella Liability"
+    ],
+    "limits": [
+      {
+        "coverage_type": "General Liability",
+        "limit": "$1,000,000 each occurrence / $2,000,000 aggregate"
+      },
+      {
+        "coverage_type": "Automobile Liability",
+        "limit": "$1,000,000 combined single limit"
+      },
+      {
+        "coverage_type": "Umbrella Liability",
+        "limit": "$5,000,000 each occurrence"
+      }
+    ],
+    "effective_date": "2026-08-28",
+    "expiry_date": "2027-05-15",
+    "confidence": 0.95,
+    "needs_review": false,
+    "review_reasons": []
+  }
+}

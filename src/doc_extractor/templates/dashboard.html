@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Document Extractor</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%231b4332' width='32' height='32' rx='6'/%3E%3Cpath d='M8 22V10h4.2c2.4 0 3.8 1.2 3.8 3.1 0 2-1.4 3.2-3.8 3.2H11v5.7H8zm3-8.2h1c1 0 1.6-.5 1.6-1.3S13 11.2 12 11.2H11v2.6zM18 22l3.2-12h3.1L27.4 22h-3l-.5-2.1h-2.4L21 22h-3zm3.4-4.4h1.7l-.8-3.4-.9 3.4z' fill='%23f4f0e6'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --paper: #efe6d6;
+      --card: #fffaf3;
+      --ink: #1c1915;
+      --muted: #625c52;
+      --line: #e3d7c4;
+      --pine: #1b4332;
+      --gold: #8d6a32;
+      --shadow: 0 18px 50px rgba(70, 48, 18, 0.08);
+      --soon: #7a4e09;
+      --soon-bg: #f8ecd4;
+      --bad: #8c2f24;
+      --bad-bg: #f8e4de;
+      --ok: #1c6b45;
+      --ok-bg: #e4f3ea;
+      --unk: #3e4a57;
+      --unk-bg: #e7ebf0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(900px 420px at 0% -10%, rgba(141, 106, 50, 0.18), transparent 55%),
+        radial-gradient(700px 380px at 100% 0%, rgba(27, 67, 50, 0.12), transparent 50%),
+        var(--paper);
+      font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+      line-height: 1.45;
+    }
+    a { color: var(--pine); }
+    header, main { width: min(1080px, calc(100% - 32px)); margin: 0 auto; }
+    header { padding: 36px 0 8px; display: flex; justify-content: space-between; gap: 24px; align-items: flex-end; }
+    .wordmark { font-family: Georgia, "Iowan Old Style", Palatino, serif; font-size: 40px; line-height: 0.95; margin: 0; font-weight: 600; letter-spacing: -0.03em; }
+    .deck { margin: 10px 0 0; max-width: 46rem; color: var(--muted); }
+    .mode { border: 1px solid var(--line); background: rgba(255, 250, 243, 0.7); color: var(--pine); border-radius: 999px; padding: 8px 12px; font-size: 13px; white-space: nowrap; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 22px 0; }
+    .stat, .panel, .row-card, .mail { background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }
+    .stat { padding: 16px 16px 14px; }
+    .stat-label, .kicker, .stat-note, .meta, .when, .quiet { color: var(--muted); }
+    .stat-label { margin: 0; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .stat-value { margin: 6px 0 0; font-family: Georgia, Palatino, serif; font-size: 34px; line-height: 1; }
+    .stat-note { margin: 8px 0 0; font-size: 13px; }
+    .layout { display: grid; grid-template-columns: 1.7fr 0.9fr; gap: 16px; align-items: start; }
+    .panel { padding: 16px; }
+    .panel h2, .mail h3, .row-card h2 { font-family: Georgia, Palatino, serif; font-weight: 600; }
+    .panel h2 { margin: 0 0 12px; font-size: 22px; }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .filter { text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; color: var(--ink); background: transparent; font-size: 14px; }
+    .filter span { color: var(--muted); }
+    .filter.is-active { background: var(--pine); color: #f6f1e6; border-color: var(--pine); }
+    .filter.is-active span { color: #e7d7b4; }
+    .row-card { padding: 16px 16px 12px; margin-bottom: 12px; }
+    .row-main { display: flex; justify-content: space-between; gap: 16px; }
+    .row-card h2 { margin: 2px 0 4px; font-size: 26px; letter-spacing: -0.02em; }
+    .kicker { margin: 0; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+    .meta { margin: 0; }
+    .row-status { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: 140px; }
+    .pill { border-radius: 999px; padding: 5px 10px; font-size: 13px; font-weight: 650; }
+    .pill-expiring_soon { background: var(--soon-bg); color: var(--soon); }
+    .pill-expired { background: var(--bad-bg); color: var(--bad); }
+    .pill-valid { background: var(--ok-bg); color: var(--ok); }
+    .pill-unknown { background: var(--unk-bg); color: var(--unk); }
+    .review-flag { color: var(--soon); font-style: normal; font-size: 13px; font-weight: 650; }
+    .facts, .payload { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0; }
+    .payload { grid-template-columns: repeat(3, 1fr); }
+    .facts div, .payload div { border-top: 1px solid var(--line); padding-top: 6px; }
+    dt { font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+    dd { margin: 2px 0 0; }
+    .why { margin: 0 0 8px; color: var(--ink); }
+    .reasons { margin: 0 0 8px; padding-left: 18px; color: var(--soon); }
+    details summary { cursor: pointer; color: var(--pine); margin: 4px 0 8px; }
+    .coverages { margin: 0; padding-left: 18px; }
+    .lines { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .lines th, .lines td { text-align: left; border-bottom: 1px solid var(--line); padding: 6px 4px; }
+    .empty { color: var(--muted); margin: 8px 0; }
+    .banner { background: var(--bad-bg); color: var(--bad); border-radius: 12px; padding: 10px 12px; }
+    form { display: grid; gap: 8px; }
+    label { font-size: 13px; color: var(--muted); }
+    input, select, button { font: inherit; }
+    input[type="file"], select { width: 100%; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 8px; }
+    button { background: var(--pine); color: #f6f1e6; border: 0; border-radius: 999px; padding: 10px 14px; cursor: pointer; }
+    button:hover { background: #143728; }
+    .note { color: var(--muted); font-size: 14px; }
+    .mail { padding: 12px; margin-bottom: 10px; }
+    .mail h3 { margin: 4px 0; font-size: 18px; }
+    .mail pre { white-space: pre-wrap; font-family: "Iowan Old Style", Georgia, serif; font-size: 14px; line-height: 1.45; margin: 8px 0 0; }
+    .reminder-mode { margin-top: 0; color: var(--gold); font-weight: 650; }
+    .rule { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
+    footer { width: min(1080px, calc(100% - 32px)); margin: 8px auto 40px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 860px) {
+      header { flex-direction: column; align-items: flex-start; }
+      .stats, .layout, .facts, .payload { grid-template-columns: 1fr 1fr; }
+      .layout { grid-template-columns: 1fr; }
+      .wordmark { font-size: 34px; }
+      .row-main { flex-direction: column; }
+      .row-status { align-items: flex-start; }
+    }
+    @media (max-width: 560px) {
+      .stats, .facts, .payload { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1 class="wordmark">AI Document Extractor</h1>
+      <p class="deck">Read a certificate or an invoice, file the fields, and draft a reminder before the date passes. The sample companies are fictional.</p>
+    </div>
+    <p class="mode">[[MODE]]</p>
+  </header>
+  <main>
+    [[ERROR]]
+    <section class="stats">[[STATS]]</section>
+    <div class="layout">
+      <section class="panel">
+        <h2>Tracker</h2>
+        <nav class="filters">[[FILTERS]]</nav>
+        [[ROWS]]
+        <p class="rule">A row is emailed only when its date is inside [[WINDOW]] days, it has not already been reminded, and it is not flagged for review. Today is [[TODAY]].</p>
+      </section>
+      <aside>
+        <section class="panel">
+          <h2>Try a PDF</h2>
+          <form action="/upload" method="post" enctype="multipart/form-data">
+            <label for="file">PDF file</label>
+            <input id="file" name="file" type="file" accept="application/pdf,.pdf" required>
+            <label for="schema_name">What kind of document is it?</label>
+            <select id="schema_name" name="schema_name">
+              <option value="auto">Detect from the file</option>
+              <option value="coi">Certificate of insurance</option>
+              <option value="invoice">Invoice</option>
+            </select>
+            <button type="submit">Extract fields</button>
+          </form>
+          <p class="note">[[PROVIDER_NOTE]]</p>
+        </section>
+        <section class="panel" style="margin-top: 16px">
+          <h2>Reminder preview</h2>
+          [[REMINDERS]]
+        </section>
+      </aside>
+    </div>
+  </main>
+  <footer>
+    <p>Status colors: amber is inside the reminder window, red is past the date, green is outside the window, gray means the date was missing. Color is paired with a written status.</p>
+    <p><a href="/extractions.csv">Download the CSV</a> · <a href="/docs">API docs</a> · <a href="/api/health">Health</a></p>
+  </footer>
+</body>
+</html>

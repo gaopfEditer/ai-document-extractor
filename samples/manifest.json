@@ -1,0 +1,54 @@
+{
+  "generated_on": "2026-10-07",
+  "note": "Fictional documents. Dates are relative to generated_on so a 30-day window stays illustrative.",
+  "documents": [
+    {
+      "filename": "coi-northwind-scaffolding.pdf",
+      "schema": "coi",
+      "title": "Northwind Scaffolding LLC",
+      "relevant_date": "2026-10-25",
+      "status_if_window_is_30_days": "expiring_soon",
+      "needs_review": false
+    },
+    {
+      "filename": "coi-harbor-pine-electrical.pdf",
+      "schema": "coi",
+      "title": "Harbor & Pine Electrical Co.",
+      "relevant_date": "2027-05-15",
+      "status_if_window_is_30_days": "valid",
+      "needs_review": false
+    },
+    {
+      "filename": "coi-blue-mesa-roofing.pdf",
+      "schema": "coi",
+      "title": "Blue Mesa Roofing Inc.",
+      "relevant_date": "2026-08-23",
+      "status_if_window_is_30_days": "expired",
+      "needs_review": false
+    },
+    {
+      "filename": "coi-summit-drywall-incomplete.pdf",
+      "schema": "coi",
+      "title": "Summit Drywall Partners",
+      "relevant_date": null,
+      "status_if_window_is_30_days": "unknown",
+      "needs_review": true
+    },
+    {
+      "filename": "invoice-lumen-office-supply.pdf",
+      "schema": "invoice",
+      "title": "Lumen Office Supply",
+      "relevant_date": "2026-10-19",
+      "status_if_window_is_30_days": "expiring_soon",
+      "needs_review": false
+    },
+    {
+      "filename": "invoice-cedar-co-printing.pdf",
+      "schema": "invoice",
+      "title": "Cedar & Co. Printing",
+      "relevant_date": "2026-12-21",
+      "status_if_window_is_30_days": "valid",
+      "needs_review": false
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+[project]
+name = "ai-document-extractor"
+version = "0.1.0"
+description = "Extract structured fields from PDFs, track expiry and due dates, and draft reminder emails."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "AI Document Extractor contributors" }]
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn>=0.32",
+  "pydantic>=2.9",
+  "pydantic-settings>=2.6",
+  "python-multipart>=0.0.12",
+  "pdfplumber>=0.11",
+  "pypdf>=5.0",
+  "httpx>=0.27",
+  "typer>=0.12",
+  "gspread>=6.1",
+  "google-auth>=2.35",
+  "apscheduler>=3.10",
+  "reportlab>=4.2",
+]
+
+[project.optional-dependencies]
+ocr = ["pytesseract>=0.3.13", "pdf2image>=1.17"]
+dev = ["pytest>=8.3"]
+
+[project.scripts]
+doc-extractor = "doc_extractor.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+doc_extractor = ["templates/*.html"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"

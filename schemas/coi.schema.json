@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CertificateOfInsurance",
+  "type": "object",
+  "additionalProperties": false,
+  "description": "Fields copied from a certificate of insurance. Do not add an expiry status or a reminder decision.",
+  "properties": {
+    "company_name": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "description": "Named insured, exactly as printed."
+    },
+    "policy_number": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "description": "Policy or certificate number, exactly as printed."
+    },
+    "insurer": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "description": "Insurance company that issued the certificate."
+    },
+    "coverage_types": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Coverage names, such as General Liability."
+    },
+    "limits": {
+      "type": "array",
+      "description": "Limit printed for each coverage. Keep the amount as text.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "coverage_type": { "type": "string" },
+          "limit": { "type": "string" }
+        },
+        "required": ["coverage_type", "limit"]
+      }
+    },
+    "effective_date": {
+      "anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+      "description": "ISO date YYYY-MM-DD, or null if it is not printed."
+    },
+    "expiry_date": {
+      "anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+      "description": "ISO date YYYY-MM-DD, or null if it is not printed. Do not decide whether it is expired."
+    },
+    "confidence": {
+      "type": "number",
+      "description": "Certainty from 0 to 1 that the fields match the document."
+    },
+    "needs_review": {
+      "type": "boolean",
+      "description": "True when a required field is missing, a date is ambiguous, or the text looks incomplete."
+    },
+    "review_reasons": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": [
+    "company_name",
+    "policy_number",
+    "insurer",
+    "coverage_types",
+    "limits",
+    "effective_date",
+    "expiry_date",
+    "confidence",
+    "needs_review",
+    "review_reasons"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schema": "invoice",
+  "filename": "invoice-lumen-office-supply.pdf",
+  "needle": "Lumen Office Supply",
+  "payload": {
+    "vendor": "Lumen Office Supply",
+    "invoice_number": "INV-10482",
+    "invoice_date": "2026-09-29",
+    "due_date": "2026-10-19",
+    "line_items": [
+      {
+        "description": "Copy paper, letter (case)",
+        "quantity": 10.0,
+        "unit_price": 42.0,
+        "amount": 420.0
+      },
+      {
+        "description": "Black toner cartridge",
+        "quantity": 4.0,
+        "unit_price": 189.5,
+        "amount": 758.0
+      },
+      {
+        "description": "File folders, box of 100",
+        "quantity": 6.0,
+        "unit_price": 18.75,
+        "amount": 112.5
+      }
+    ],
+    "total": 1290.5,
+    "currency": "USD",
+    "confidence": 0.95,
+    "needs_review": false,
+    "review_reasons": []
+  }
+}

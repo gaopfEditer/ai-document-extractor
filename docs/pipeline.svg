@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 220" role="img" aria-labelledby="title desc">
+  <title id="title">How a document moves through the extractor</title>
+  <desc id="desc">A PDF or email is read, a model fills the fields, code decides the date status, then the row is saved and a reminder can be drafted.</desc>
+  <rect width="980" height="220" rx="18" fill="#F7F1E4"/>
+  <g font-family="Georgia, Palatino, serif" font-size="15" fill="#1C1915">
+    <rect x="24" y="70" width="150" height="78" rx="12" fill="#1B4332"/>
+    <text x="99" y="104" text-anchor="middle" fill="#F6F1E6" font-family="Segoe UI, Helvetica, sans-serif" font-size="13">PDF or email</text>
+    <text x="99" y="124" text-anchor="middle" fill="#E7D7B4" font-family="Segoe UI, Helvetica, sans-serif" font-size="11">folder, upload, inbox</text>
+    <rect x="214" y="70" width="150" height="78" rx="12" fill="#FFF9F1" stroke="#E3D7C4"/>
+    <text x="289" y="104" text-anchor="middle">Read the text</text>
+    <text x="289" y="124" text-anchor="middle" font-family="Segoe UI, Helvetica, sans-serif" font-size="11" fill="#625C52">scans noted, OCR optional</text>
+    <rect x="404" y="70" width="160" height="78" rx="12" fill="#FFF9F1" stroke="#E3D7C4"/>
+    <text x="484" y="104" text-anchor="middle">Model fills fields</text>
+    <text x="484" y="124" text-anchor="middle" font-family="Segoe UI, Helvetica, sans-serif" font-size="11" fill="#625C52">checked against a schema</text>
+    <rect x="604" y="70" width="160" height="78" rx="12" fill="#F8ECD4" stroke="#E3D7C4"/>
+    <text x="684" y="100" text-anchor="middle">Code decides</text>
+    <text x="684" y="120" text-anchor="middle">the status</text>
+    <rect x="804" y="48" width="152" height="52" rx="12" fill="#FFF9F1" stroke="#E3D7C4"/>
+    <text x="880" y="78" text-anchor="middle" font-size="14">Sheet or CSV</text>
+    <rect x="804" y="118" width="152" height="52" rx="12" fill="#1B4332"/>
+    <text x="880" y="148" text-anchor="middle" fill="#F6F1E6" font-size="14">Reminder email</text>
+  </g>
+  <g stroke="#1B4332" stroke-width="1.6" fill="none">
+    <path d="M174 109 H214"/>
+    <path d="M364 109 H404"/>
+    <path d="M564 109 H604"/>
+    <path d="M764 109 H804"/>
+    <path d="M174 109 H214" marker-end="url(#arrow)"/>
+  </g>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0 0 L6 3 L0 6 Z" fill="#1B4332"/>
+    </marker>
+  </defs>
+  <g stroke="#1B4332" stroke-width="1.6" fill="#1B4332">
+    <path d="M206 109 l-8 -4 v8 z"/>
+    <path d="M396 109 l-8 -4 v8 z"/>
+    <path d="M596 109 l-8 -4 v8 z"/>
+    <path d="M796 96 l-8 -4 v8 z"/>
+    <path d="M796 122 l-8 -4 v8 z"/>
+  </g>
+</svg>

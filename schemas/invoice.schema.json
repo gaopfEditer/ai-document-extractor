@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Invoice",
+  "type": "object",
+  "additionalProperties": false,
+  "description": "Fields copied from an invoice. Do not decide whether it is due or whether to send a reminder.",
+  "properties": {
+    "vendor": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "description": "Company that sent the invoice."
+    },
+    "invoice_number": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "description": "Invoice number, exactly as printed."
+    },
+    "invoice_date": {
+      "anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+      "description": "ISO date YYYY-MM-DD, or null."
+    },
+    "due_date": {
+      "anyOf": [{ "type": "string", "format": "date" }, { "type": "null" }],
+      "description": "ISO date YYYY-MM-DD, or null. Do not decide whether it is past due."
+    },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "description": { "type": "string" },
+          "quantity": { "anyOf": [{ "type": "number" }, { "type": "null" }] },
+          "unit_price": { "anyOf": [{ "type": "number" }, { "type": "null" }] },
+          "amount": { "anyOf": [{ "type": "number" }, { "type": "null" }] }
+        },
+        "required": ["description", "quantity", "unit_price", "amount"]
+      }
+    },
+    "total": {
+      "anyOf": [{ "type": "number" }, { "type": "null" }],
+      "description": "Invoice total as a number, without a currency symbol."
+    },
+    "currency": {
+      "anyOf": [{ "type": "string" }, { "type": "null" }],
+      "description": "ISO currency code such as USD."
+    },
+    "confidence": {
+      "type": "number",
+      "description": "Certainty from 0 to 1 that the fields match the document."
+    },
+    "needs_review": {
+      "type": "boolean"
+    },
+    "review_reasons": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": [
+    "vendor",
+    "invoice_number",
+    "invoice_date",
+    "due_date",
+    "line_items",
+    "total",
+    "currency",
+    "confidence",
+    "needs_review",
+    "review_reasons"
+  ]
+}

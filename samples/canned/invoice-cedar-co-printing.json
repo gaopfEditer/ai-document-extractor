@@ -1,0 +1,36 @@
+{
+  "schema": "invoice",
+  "filename": "invoice-cedar-co-printing.pdf",
+  "needle": "Cedar & Co. Printing",
+  "payload": {
+    "vendor": "Cedar & Co. Printing",
+    "invoice_number": "INV-5591",
+    "invoice_date": "2026-10-05",
+    "due_date": "2026-12-21",
+    "line_items": [
+      {
+        "description": "Job-site banners, 3x6 ft",
+        "quantity": 4.0,
+        "unit_price": 85.0,
+        "amount": 340.0
+      },
+      {
+        "description": "Business cards, box",
+        "quantity": 10.0,
+        "unit_price": 32.0,
+        "amount": 320.0
+      },
+      {
+        "description": "Safety posters",
+        "quantity": 15.0,
+        "unit_price": 20.0,
+        "amount": 300.0
+      }
+    ],
+    "total": 960.0,
+    "currency": "USD",
+    "confidence": 0.95,
+    "needs_review": false,
+    "review_reasons": []
+  }
+}

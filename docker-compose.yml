@@ -1,0 +1,35 @@
+# Offline demo. `docker compose up --build` does not call a model or send email.
+# To use a real model later, change LLM_PROVIDER and add the key from .env.example.
+services:
+  extractor:
+    build: .
+    ports:
+      - "8741:8741"
+    environment:
+      DEMO_MODE: "true"
+      LLM_PROVIDER: mock
+      REMINDER_DRY_RUN: "true"
+      REMINDER_DAYS: "30"
+      PROCESS_SAMPLES_ON_START: "true"
+      WATCH_ENABLED: "true"
+      SCHEDULER_ENABLED: "true"
+      HOST: 0.0.0.0
+      PORT: "8741"
+    volumes:
+      - extractor-data:/app/data
+      - ./inbox:/app/inbox
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8741/api/health')",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 25s
+
+volumes:
+  extractor-data:

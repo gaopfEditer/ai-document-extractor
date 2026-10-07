@@ -1,0 +1,26 @@
+{
+  "schema": "coi",
+  "filename": "coi-summit-drywall-incomplete.pdf",
+  "needle": "Summit Drywall Partners",
+  "payload": {
+    "company_name": "Summit Drywall Partners",
+    "policy_number": "GL-44012-SD",
+    "insurer": "High Desert Specialty Insurance",
+    "coverage_types": [
+      "General Liability"
+    ],
+    "limits": [
+      {
+        "coverage_type": "General Liability",
+        "limit": "$1,000,000 each occurrence / $2,000,000 aggregate"
+      }
+    ],
+    "effective_date": "2026-06-29",
+    "expiry_date": null,
+    "confidence": 0.44,
+    "needs_review": true,
+    "review_reasons": [
+      "Missing expiry date."
+    ]
+  }
+}
